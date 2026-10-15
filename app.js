@@ -46,7 +46,7 @@ sms:{tab:"SMS",color:"#ffb547",title:"SMS Onboarding Questionnaire",secs:[
  ["Commercial Information",[F("go","Expected Go-Live Date","date"),BILL]]]},
 rcs:{tab:"RCS",color:"#6b95ff",title:"RCS Business Messaging Onboarding Questionnaire",secs:[
  ["Basic Information",[F("email","Email","email",{auto:"email"}),F("sn","SPOC Name","text",{hint:"This will be used for RCS Activation LOA"}),F("sd","SPOC Designation","text",{hint:"This will be used for RCS Activation LOA"}),F("sm","SPOC Mobile Number","tel",{hint:"This will be used for RCS Activation LOA",auto:"tel"})]],
- ["Brand Information",[F("bn","Brand Name to be displayed on RCS"),F("ln","Legal Name of the Brand"),C("uc","Intended use case for RCS messaging",["Promotional","Transactional","OTP"]),F("an","Agent Name (Display Name)"),F("ad","Agent Description","textarea"),F("lg","Agent Logo - link to file (share PNG/JPG over email or paste a link - 224 px x 224px under 50kb)","imglink",{kind:"logo"}),F("hr","Hero Image / Banner - link to file ( 1440 × 448 pixels, under 200kb, 45:14 aspect ratio)","imglink",{kind:"hero"}),F("bc","Brand Colors (Hex Code)","hex",{hint:"For example #00B9F5"})]],
+ ["Brand Information",[F("bn","Brand Name to be displayed on RCS"),F("ln","Legal Name of the Brand"),C("uc","Intended use case for RCS messaging",["Promotional","Transactional","OTP"]),F("an","Agent Name (Display Name)"),F("ad","Agent Description","textarea"),F("lg","Agent Logo","imglink",{kind:"logo",title:"Agent Logo - link to file (share PNG/JPG over email or paste a link - 224 px x 224px under 50kb)"}),F("hr","Hero Image / Banner","imglink",{kind:"hero",title:"Hero Image / Banner - link to file ( 1440 × 448 pixels, under 200kb, 45:14 aspect ratio)"}),F("bc","Brand Colors (Hex Code)","hex",{hint:"For example #00B9F5"})]],
  ["Contact Information",[F("cp","Customer Support Phone Number","tel"),F("cpl","Display Label for Phone Number"),F("ce","Customer Support Email","email"),F("cel","Display Label for Email"),F("cw","Business Website URL","url"),F("cwl","Display Label for Website")]],
  ["Customer Consent (Opt-in)",[F("cons","How do you obtain customer consent before sending RCS messages?","textarea")]],
  ["Privacy & Compliance",[F("pp","Privacy Policy URL","url"),F("tc","Terms & Conditions URL","url")]],
@@ -90,7 +90,7 @@ function fieldHTML(key,s){
  }
 
  if(s.type==="imglink"){
-  var ru=(CFG.IMAGE_RULES||{})[s.kind]||{},ht="JPG or JPEG only"+(ru.width?". "+ru.width+" \u00D7 "+ru.height+" px":"")+(ru.maxKB?", under "+ru.maxKB+" KB":"")+". Paste a link or upload the image.";
+  var ru=(CFG.IMAGE_RULES||{})[s.kind]||{},ht="JPG or JPEG only"+(ru.width?". "+ru.width+" \u00D7 "+ru.height+" px":"")+(ru.maxKB?", under "+ru.maxKB+" KB":"")+".";
   return'<div class="f full" data-id="'+s.id+'"><label for="'+id+'">'+lab+'</label><p class="hint" id="'+id+'-h">'+esc(ht)+'</p>'+
    '<div class="seg" role="group" aria-label="Image source"><button type="button" class="on" data-m="link" aria-pressed="true">Paste link</button><button type="button" data-m="upload" aria-pressed="false">Upload image</button></div>'+
    '<input class="c" id="'+id+'" name="'+s.id+'" type="text" inputmode="url" autocomplete="off" maxlength="300" placeholder="https://" aria-describedby="'+id+'-h '+id+'-e">'+
@@ -202,7 +202,7 @@ function submit(F_,e){
 
  var p=new URLSearchParams(),miss=[];
  F_.specs.forEach(function(s){
-  var shown=vis(F_,s),v=shown?get(F_,s):"N/A",key=s.id==="email"&&F_.specs[0].id==="email"?"emailAddress":F_.map[norm(s.label)];
+  var shown=vis(F_,s),v=shown?get(F_,s):"N/A",key=s.id==="email"&&F_.specs[0].id==="email"?"emailAddress":F_.map[norm(s.title||s.label)];
   if(!shown&&s.type==="select"){if(!HIDDEN_SELECT_VALUE)return;v=HIDDEN_SELECT_VALUE}
   if(!key){miss.push(s.label);return}
   if(s.type==="date"){var d=v.split("-");p.append(key+"_year",d[0]);p.append(key+"_month",d[1]);p.append(key+"_day",d[2])}
@@ -239,7 +239,7 @@ $("#done").addEventListener("close",resetAll);
 $("#done").addEventListener("click",function(e){if(e.target===this)this.close()});
 
 ORDER.forEach(build);
-ORDER.forEach(function(k){var F_=state[k],m=F_.specs.filter(function(s){return!(s.id==="email"&&F_.specs[0].id==="email")&&!F_.map[norm(s.label)]}).map(function(s){return s.label});
+ORDER.forEach(function(k){var F_=state[k],m=F_.specs.filter(function(s){return!(s.id==="email"&&F_.specs[0].id==="email")&&!F_.map[norm(s.title||s.label)]}).map(function(s){return s.label});
  if(m.length&&!preview)console.warn("[Onboarding] "+FORMS[k].tab+" form: Google entry IDs missing for "+m.length+" field(s). Submissions will not be sent until they are added to ENTRY."+k,m)});
 select("whatsapp");
 })();
