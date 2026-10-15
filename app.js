@@ -46,7 +46,7 @@ sms:{tab:"SMS",color:"#ffb547",title:"SMS Onboarding Questionnaire",secs:[
  ["Commercial Information",[F("go","Expected Go-Live Date","date"),BILL]]]},
 rcs:{tab:"RCS",color:"#6b95ff",title:"RCS Business Messaging Onboarding Questionnaire",secs:[
  ["Basic Information",[F("email","Email","email",{auto:"email"}),F("sn","SPOC Name","text",{hint:"This will be used for RCS Activation LOA"}),F("sd","SPOC Designation","text",{hint:"This will be used for RCS Activation LOA"}),F("sm","SPOC Mobile Number","tel",{hint:"This will be used for RCS Activation LOA",auto:"tel"})]],
- ["Brand Information",[F("bn","Brand Name to be displayed on RCS"),F("ln","Legal Name of the Brand"),C("uc","Intended use case for RCS messaging",["Promotional","Transactional","OTP"]),F("an","Agent Name (Display Name)"),F("ad","Agent Description","textarea"),F("lg","Agent Logo - link to file (share PNG/JPG over email or paste a link - 224 px x 224px under 50kb)","url"),F("hr","Hero Image / Banner - link to file ( 1440 × 448 pixels, under 200kb, 45:14 aspect ratio)","url"),F("bc","Brand Colors (Hex Code)","hex",{hint:"For example #00B9F5"})]],
+ ["Brand Information",[F("bn","Brand Name to be displayed on RCS"),F("ln","Legal Name of the Brand"),C("uc","Intended use case for RCS messaging",["Promotional","Transactional","OTP"]),F("an","Agent Name (Display Name)"),F("ad","Agent Description","textarea"),F("lg","Agent Logo - link to file (share PNG/JPG over email or paste a link - 224 px x 224px under 50kb)","imglink",{kind:"logo"}),F("hr","Hero Image / Banner - link to file ( 1440 × 448 pixels, under 200kb, 45:14 aspect ratio)","imglink",{kind:"hero"}),F("bc","Brand Colors (Hex Code)","hex",{hint:"For example #00B9F5"})]],
  ["Contact Information",[F("cp","Customer Support Phone Number","tel"),F("cpl","Display Label for Phone Number"),F("ce","Customer Support Email","email"),F("cel","Display Label for Email"),F("cw","Business Website URL","url"),F("cwl","Display Label for Website")]],
  ["Customer Consent (Opt-in)",[F("cons","How do you obtain customer consent before sending RCS messages?","textarea")]],
  ["Privacy & Compliance",[F("pp","Privacy Policy URL","url"),F("tc","Terms & Conditions URL","url")]],
@@ -60,11 +60,12 @@ var ORDER=["whatsapp","sms","rcs"];
 var URLRE=/^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(:\d+)?(\/\S*)?$/i;
 function check(s,v){
  var empty=Array.isArray(v)?!v.length:!v;
- if(empty)return s.type==="check"?"Select at least one option.":s.type==="radio"?"Please select an option.":s.type==="select"?"Please choose an option.":"This field is required.";
+ if(empty)return s.type==="imglink"?(s._mode==="upload"?"Please upload a JPG or JPEG image.":"Paste an image link or upload a JPG or JPEG image."):s.type==="check"?"Select at least one option.":s.type==="radio"?"Please select an option.":s.type==="select"?"Please choose an option.":"This field is required.";
  switch(s.type){
   case"email":return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)?"":"Enter a valid email address.";
   case"tel":var d=v.replace(/\D/g,"");return/^\+?[\d\s-]+$/.test(v)&&d.length>=10&&d.length<=15?"":"Enter a valid mobile number (10 to 15 digits).";
   case"url":return URLRE.test(v)?"":"Enter a valid link, for example https://example.com";
+  case"imglink":return URLRE.test(v)?"":"Enter a valid link, for example https://example.com/logo.jpg";
   case"hex":return/^#?[0-9a-f]{6}$/i.test(v)?"":"Enter a 6-digit hex code, for example #00B9F5.";
   case"number":return/^[1-9]\d{0,5}$/.test(v)?"":"Enter a whole number greater than 0.";
   case"date":return v>=today?"":"Choose today's date or a later date.";
@@ -86,6 +87,15 @@ function fieldHTML(key,s){
  if(s.type==="radio"||s.type==="check"){
   var t=s.type==="radio"?"radio":"checkbox";
   return'<fieldset class="f full" data-id="'+s.id+'"><legend>'+lab+'</legend>'+hint+'<div class="opts">'+s.opts.map(function(o){return'<label class="opt"><input type="'+t+'" name="'+s.id+'" value="'+esc(o)+'"><span>'+esc(o)+'</span></label>'}).join("")+'</div>'+err+'</fieldset>';
+ }
+
+ if(s.type==="imglink"){
+  var ru=(CFG.IMAGE_RULES||{})[s.kind]||{},ht="JPG or JPEG only"+(ru.width?". "+ru.width+" \u00D7 "+ru.height+" px":"")+(ru.maxKB?", under "+ru.maxKB+" KB":"")+". Paste a link or upload the image.";
+  return'<div class="f full" data-id="'+s.id+'"><label for="'+id+'">'+lab+'</label><p class="hint" id="'+id+'-h">'+esc(ht)+'</p>'+
+   '<div class="seg" role="group" aria-label="Image source"><button type="button" class="on" data-m="link" aria-pressed="true">Paste link</button><button type="button" data-m="upload" aria-pressed="false">Upload image</button></div>'+
+   '<input class="c" id="'+id+'" name="'+s.id+'" type="text" inputmode="url" autocomplete="off" maxlength="300" placeholder="https://" aria-describedby="'+id+'-h '+id+'-e">'+
+   '<div class="up" hidden><label class="pick" for="'+id+'-f"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span>Choose a JPG or JPEG image</span><input id="'+id+'-f" type="file" accept=".jpg,.jpeg,image/jpeg"></label>'+
+   '<div class="fi" hidden><img alt="Selected image preview"><span class="fn"></span><button type="button" class="rm">Remove</button></div><p class="st" aria-live="polite"></p></div>'+err+'</div>';
  }
  var full=s.type==="textarea"||s.type==="phones"||s.full||s.label.length>58,
   dby=' aria-describedby="'+(s.hint?id+'-h ':"")+id+'-e"',ctl;
@@ -116,8 +126,9 @@ function build(key){
  F_.el.addEventListener("input",function(){refresh(F_)});
  F_.el.addEventListener("change",function(){refresh(F_)});
  F_.el.addEventListener("focusout",function(e){var w=e.target.closest&&e.target.closest("[data-id]");if(!w||w.classList.contains("hide"))return;var s=by[w.dataset.id];
-  if(s.type==="radio"||s.type==="check")return;if(get(F_,s)||w.classList.contains("bad"))setErr(w,check(s,get(F_,s)))});
+  if(s.type==="radio"||s.type==="check")return;if(s.type==="imglink"&&!(e.target.classList&&e.target.classList.contains("c")))return;if(get(F_,s)||w.classList.contains("bad"))setErr(w,check(s,get(F_,s)))});
  F_.el.addEventListener("submit",function(e){submit(F_,e)});
+ wireImages(F_);
  F_.el.hidden=false;
  var b=document.createElement("button");
  b.className="tab";b.type="button";b.setAttribute("role","tab");b.id="tab-"+key;b.style.setProperty("--c",def.color);b.setAttribute("aria-controls","panel-"+key);
@@ -152,11 +163,41 @@ function select(key){
  refresh(state[key]);
 }
 
+/* ---------- Image link / upload (RCS logo and banner) ---------- */
+var IMG_ERR={type:"Only JPG or JPEG images are allowed.",net:"The upload did not complete. Please try again, or paste a link instead.",off:"Image upload is not available right now. Please paste a link instead."};
+function readAs(file,how,to){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=rej;if(how==="buf")r.readAsArrayBuffer(file.slice(0,to));else r.readAsDataURL(file)})}
+function imgSize(file){return new Promise(function(res,rej){var u=URL.createObjectURL(file),i=new Image();i.onload=function(){res({w:i.naturalWidth,h:i.naturalHeight,u:u})};i.onerror=function(){URL.revokeObjectURL(u);rej(new Error("type"))};i.src=u})}
+function clearImg(w){w._seq=(w._seq||0)+1;delete w.dataset.busy;$(".c",w).value="";$(".up input",w).value="";if(w._url){URL.revokeObjectURL(w._url);w._url=null}$(".fi",w).hidden=true;var st=$(".st",w);st.textContent="";st.className="st"}
+function imgSet(F_,s,w,mode){s._mode=mode;$$(".seg button",w).forEach(function(b){var on=b.dataset.m===mode;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)});$(".c",w).hidden=mode==="upload";$(".up",w).hidden=mode!=="upload";clearImg(w);setErr(w,"");refresh(F_)}
+function onFile(F_,s,w,file){
+ var seq=(w._seq=(w._seq||0)+1),st=$(".st",w),rule=(CFG.IMAGE_RULES||{})[s.kind]||{};
+ function fail(m){if(seq!==w._seq)return;clearImg(w);setErr(w,m);refresh(F_)}
+ setErr(w,"");if(!file)return;
+ if(!/\.jpe?g$/i.test(file.name)||(file.type&&file.type!=="image/jpeg"))return fail(IMG_ERR.type);
+ if(rule.maxKB&&file.size>rule.maxKB*1024)return fail("The image must be under "+rule.maxKB+" KB (yours is "+Math.ceil(file.size/1024)+" KB).");
+ readAs(file,"buf",3).then(function(b){var a=new Uint8Array(b);if(!(a[0]===255&&a[1]===216&&a[2]===255))throw new Error("type");return imgSize(file)}).then(function(d){
+  if(seq!==w._seq){URL.revokeObjectURL(d.u);return}
+  if(rule.width&&(d.w!==rule.width||d.h!==rule.height)){URL.revokeObjectURL(d.u);throw new Error("dim:"+d.w+" \u00D7 "+d.h)}
+  w._url=d.u;$(".fi img",w).src=d.u;$(".fn",w).textContent=file.name;$(".fi",w).hidden=false;
+  st.textContent="Uploading...";st.className="st";w.dataset.busy="1";
+  if(!CFG.UPLOAD_URL)throw new Error("off");
+  return readAs(file,"url").then(function(u){return fetch(CFG.UPLOAD_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:s.kind,name:file.name,mime:"image/jpeg",data:u.split(",")[1]})})})
+   .then(function(r){return r.json()}).then(function(j){if(seq!==w._seq)return;if(!j||!j.ok||!j.url)throw new Error("net");
+    $(".c",w).value=j.url;delete w.dataset.busy;st.textContent="Uploaded";st.className="st ok";refresh(F_)});
+ }).catch(function(e){var m=(e&&e.message)||"";
+  fail(m==="type"?IMG_ERR.type:m.indexOf("dim:")===0?"The image must be "+rule.width+" \u00D7 "+rule.height+" pixels (yours is "+m.slice(4)+").":m==="off"?IMG_ERR.off:IMG_ERR.net)});
+}
+function wireImages(F_){F_.specs.forEach(function(s){if(s.type!=="imglink")return;var w=wrapOf(F_,s);s._mode="link";
+ $$(".seg button",w).forEach(function(b){b.addEventListener("click",function(){imgSet(F_,s,w,b.dataset.m)})});
+ $(".up input",w).addEventListener("change",function(e){onFile(F_,s,w,e.target.files[0])});
+ $(".rm",w).addEventListener("click",function(){clearImg(w);refresh(F_)})})}
+function resetImages(F_){F_.specs.forEach(function(s){if(s.type==="imglink")imgSet(F_,s,wrapOf(F_,s),"link")})}
+
 /* ---------- Submit ---------- */
 function submit(F_,e){
  e.preventDefault();
  var first=null,btn=$(".submit",F_.el),note=$("#n-"+F_.key);note.classList.remove("on");
- F_.specs.forEach(function(s){var w=wrapOf(F_,s);if(!vis(F_,s)){setErr(w,"");return}var m=check(s,get(F_,s));setErr(w,m);if(m&&!first)first=w});
+ F_.specs.forEach(function(s){var w=wrapOf(F_,s);if(!vis(F_,s)){setErr(w,"");return}var m=w.dataset.busy?"Please wait for the upload to finish.":check(s,get(F_,s));setErr(w,m);if(m&&!first)first=w});
  if(first){first.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});var c=$("input,select,textarea",first);if(c)c.focus({preventScroll:true});return}
 
  var p=new URLSearchParams(),miss=[];
@@ -190,7 +231,7 @@ function submit(F_,e){
 
 /* ---------- Reset after confirmation ---------- */
 function resetAll(){
- ORDER.forEach(function(k){var F_=state[k];F_.el.reset();F_.specs.forEach(function(s){setErr(wrapOf(F_,s),"")});$("#n-"+k).classList.remove("on");refresh(F_)});
+ ORDER.forEach(function(k){var F_=state[k];F_.el.reset();resetImages(F_);F_.specs.forEach(function(s){setErr(wrapOf(F_,s),"")});$("#n-"+k).classList.remove("on");refresh(F_)});
  select("whatsapp");window.scrollTo({top:0,behavior:"auto"});
 }
 $("#ok").addEventListener("click",function(){var d=$("#done");d.close?d.close():d.removeAttribute("open");resetAll()});
