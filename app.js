@@ -184,7 +184,7 @@ function submit(F_,e){
 
  send.then(function(){
   var dlg=$("#done");typeof dlg.showModal==="function"?dlg.showModal():dlg.setAttribute("open","");$("#ok").focus();
- }).catch(function(){note.classList.add("on");note.scrollIntoView({block:"center"})})
+ }).catch(function(err){var code=(err&&err.message==="config"?"CFG":"NET")+"-"+F_.key.toUpperCase();note.textContent="We could not submit your form right now. Please try again in a few minutes. (Ref: "+code+")";note.classList.add("on");note.scrollIntoView({block:"center"})})
  .then(function(){btn.disabled=false;$(".lbl",btn).textContent="Submit"});
 }
 
