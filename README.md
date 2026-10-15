@@ -47,3 +47,16 @@ GitHub Pages cannot set HTTP headers. If you want a Content Security Policy, add
 ```html
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://docs.google.com https://accounts.google.com; form-action https://docs.google.com; base-uri 'none'; object-src 'none'">
 ```
+
+## RCS image upload (logo and banner)
+
+In the RCS form, "Agent Logo" and "Hero Image / Banner" accept either a pasted link or an uploaded image.
+Only JPG / JPEG files are accepted (checked by file extension and by the file's actual contents). The sizes in
+`IMAGE_RULES` in `js/config.js` are enforced on upload; remove a number there to stop checking it.
+
+Google Forms cannot receive files from a website, so an upload is first saved to Google Drive and the resulting
+link is sent in the existing form field. This needs a small Google Apps Script:
+
+1. Follow the steps at the top of `upload-apps-script.gs` (create a Drive folder, paste the script, deploy as a web app
+   with access "Anyone").
+2. Paste the web app URL into `UPLOAD_URL` in `js/config.js`.
