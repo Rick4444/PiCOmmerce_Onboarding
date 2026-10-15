@@ -5,12 +5,13 @@
  * link, which the website puts into the existing "link to file" field of the RCS Google Form.
  *
  * Setup
- *  1. Create a folder in Google Drive for the images and copy its ID (the last part of the folder URL).
- *  2. Go to script.google.com > New project, paste this file, and put the folder ID below.
- *  3. Deploy > New deployment > type "Web app".
+ *  1. Go to script.google.com > New project, delete the sample code and paste this whole file.
+ *     (The script creates a Drive folder called "Pi RCS Images" by itself the first time an image arrives.
+ *      To use an existing folder instead, put its ID in FOLDER_ID below.)
+ *  2. Click Save, then Deploy > New deployment > type "Web app".
  *       Execute as: Me
  *       Who has access: Anyone
- *  4. Authorise when asked, copy the Web app URL (it ends in /exec) and paste it into
+ *  3. Authorise when asked, copy the Web app URL (it ends in /exec) and paste it into
  *     UPLOAD_URL in config.js.
  *  After changing this script, use Deploy > Manage deployments > Edit > New version.
  *
@@ -18,7 +19,8 @@
  * ANYONE_WITH_LINK below to DOMAIN_WITH_LINK so only Paytm accounts can open the images.
  */
 
-var FOLDER_ID = "PASTE_YOUR_DRIVE_FOLDER_ID_HERE";
+var FOLDER_ID = "";                             // optional: ID of an existing Drive folder
+var FOLDER_NAME = "Pi RCS Images";              // used when FOLDER_ID is empty
 var MAX_BYTES = 300 * 1024;                     // hard server-side limit
 var KINDS = { logo: "Logo", hero: "Banner" };   // allowed image kinds
 
@@ -38,12 +40,21 @@ function doPost(e) {
     var safe = String(req.name || "image").replace(/\.(jpe?g)$/i, "").replace(/[^\w\-]+/g, "_").slice(0, 50);
     var blob = Utilities.newBlob(bytes, "image/jpeg", kind + "_" + stamp + "_" + safe + ".jpg");
 
-    var file = DriveApp.getFolderById(FOLDER_ID).createFile(blob);
+    var file = getFolder_().createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return reply({ ok: true, url: file.getUrl() });
   } catch (err) {
     return reply({ ok: false, error: "server" });
   }
+}
+
+function getFolder_() {
+  if (FOLDER_ID) return DriveApp.getFolderById(FOLDER_ID);
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty("FOLDER_ID");
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var folder = DriveApp.createFolder(FOLDER_NAME);
+  props.setProperty("FOLDER_ID", folder.getId());
+  return folder;
 }
 
 function doGet() { return reply({ ok: true, status: "upload endpoint ready" }); }
