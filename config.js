@@ -30,6 +30,17 @@ window.PI_CONFIG = {
      Leave empty to show the built-in Pi wordmark. */
   LOGO_SRC: "",
 
+  /* RCS image upload. Web-app URL of the upload script (see upload-apps-script.gs and README).
+     Leave empty and customers can still paste a link, but the Upload option will report that it is unavailable. */
+  UPLOAD_URL: "",
+
+  /* Checks applied to uploaded RCS images (JPG / JPEG only is always enforced).
+     Remove a number to stop checking it. */
+  IMAGE_RULES: {
+    logo: { width: 224,  height: 224, maxKB: 50  },
+    hero: { width: 1440, height: 448, maxKB: 200 }
+  },
+
   /* Set to true only while testing. Then:
        ?preview  simulates a successful submit without sending anything
        ?debug    opens Google's real response page in a new tab so you can read its message
