@@ -13,9 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=1.1.1">
-<script src="config.js?v=1.1.1" defer></script>
-<script src="app.js?v=1.1.1" defer></script>
+<link rel="stylesheet" href="styles.css?v=1.2.0">
+<script src="config.js?v=1.2.0" defer></script>
+<script src="app.js?v=1.2.0" defer></script>
 </head>
 <body>
 <noscript><div style="padding:16px;text-align:center;background:#fff3cd;color:#664d03;font:16px system-ui,sans-serif">Please enable JavaScript to use the onboarding form.</div></noscript>
@@ -58,7 +58,7 @@
  </div>
 </div></main>
 
-<footer><div class="wrap"><span>&copy; <span id="yr">2026</span> Paytm Intelligence &middot; Version 1.1.1</span><span>Need help? Contact your Paytm Intelligence account manager.</span></div></footer>
+<footer><div class="wrap"><span>&copy; <span id="yr">2026</span> Paytm Intelligence &middot; Version 1.2.0</span><span>Need help? Contact your Paytm Intelligence account manager.</span></div></footer>
 
 <dialog id="welcome" aria-labelledby="wt"><div class="dlg wl">
  <div class="pi" aria-hidden="true">Pi</div>
@@ -70,6 +70,12 @@
   <li><b>3</b><span><strong>Submit for review</strong><small>Our onboarding team will review your submission and contact you shortly</small></span></li>
  </ol>
  <button class="submit" id="wgo" type="button">Begin onboarding</button>
+</div></dialog>
+
+<dialog id="clear" aria-labelledby="ct"><div class="dlg">
+ <h2 id="ct">Clear this form?</h2>
+ <p>All the information you have entered in this form will be removed. This cannot be undone.</p>
+ <div class="btnrow"><button class="clear" id="cno" type="button">Cancel</button><button class="submit" id="cyes" type="button">Clear form</button></div>
 </div></dialog>
 
 <dialog id="done" aria-labelledby="dt"><div class="dlg">
