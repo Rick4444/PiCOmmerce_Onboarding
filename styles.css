@@ -173,6 +173,18 @@ img,svg,video{max-width:100%}
 .clear{appearance:none;cursor:pointer;font:600 1rem var(--body);color:var(--navy);background:#fff;border:1px solid #b9c9e6;padding:14px 26px;border-radius:12px;transition:background .2s,border-color .2s}
 .clear:hover{background:#eef4fc;border-color:#8fa8d4}
 .btnrow{display:flex;gap:12px}.btnrow>*{flex:1}.dlg .btnrow .submit{width:auto;min-width:0;white-space:nowrap;padding-inline:12px}.btnrow .clear{padding-inline:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sk{padding:30px clamp(20px,3vw,36px)}
+.sk i,.tab-sk{display:block;border-radius:11px;background:linear-gradient(90deg,#e6edf9 25%,#f4f7fd 37%,#e6edf9 63%);background-size:400% 100%;animation:shim 1.4s ease infinite}
+.sk .t{height:30px;width:55%;margin-bottom:28px}.sk .r{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}.sk .r i{height:48px}
+.tab-sk{height:48px}
+@keyframes shim{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.busy{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(0,32,90,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.bcard{width:100%;max-width:380px;padding:32px 28px;border-radius:20px;background:#fff;text-align:center;box-shadow:0 40px 90px -20px rgba(0,20,60,.5);animation:rise .3s ease both}
+.ring{width:54px;height:54px;margin:0 auto 18px;border-radius:50%;border:4px solid #e3ebf8;border-top-color:var(--navy);border-right-color:var(--cyan);animation:sp .9s linear infinite}
+.bcard h2{margin:0 0 6px;font:700 1.2rem var(--head);letter-spacing:-.02em}.bcard p{margin:0;color:var(--muted);font-size:.93rem}
+.bcard .bslow{margin-top:14px;padding:10px 12px;border-radius:10px;background:#fff6dd;color:#6d5200;font-size:.88rem}
+.st.busy::before{content:"";display:inline-block;width:12px;height:12px;margin-right:8px;vertical-align:-2px;border:2px solid #c3d1ea;border-top-color:var(--navy);border-radius:50%;animation:sp .8s linear infinite}
 /* ---------- Responsive (keep at the end; ordered large to small) ---------- */
 @media (max-width:980px){
 .layout{grid-template-columns:1fr}
@@ -220,5 +232,6 @@ img,svg,video{max-width:100%}
 html{font-size:115%}.wrap{max-width:1480px}
 }
 @media (prefers-reduced-motion:reduce){
+.ring,.spin,.st.busy::before{animation:sp 1.6s linear infinite!important}
 *,*::before,*::after{animation:none!important;transition:none!important}.tick svg{stroke-dashoffset:0}html{scroll-behavior:auto}
 }
