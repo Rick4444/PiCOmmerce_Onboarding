@@ -117,18 +117,20 @@ function build(key){
   '<form novalidate data-key="'+key+'" id="panel-'+key+'" role="tabpanel" aria-labelledby="tab-'+key+'" hidden>'+
   secs.map(function(sc){return'<div class="sec"><h3>'+esc(sc.t)+'</h3><div class="grid">'+sc.specs.map(function(s){return fieldHTML(key,s)}).join("")+'</div></div>'}).join("")+
   '<div class="notice" role="alert" id="n-'+key+'">We could not submit your form right now. Please try again in a few minutes.</div>'+
-  '<div class="actions"><button class="submit" type="submit"><span class="spin"></span><span class="lbl">Submit</span></button><span class="small">Your response goes to the Paytm Intelligence onboarding team.</span></div></form>';
+  '<div class="actions"><button class="submit" type="submit"><span class="spin"></span><span class="lbl">Submit</span></button><button class="clear" type="button" data-clear>Clear form</button><span class="small">Your response goes to the Paytm Intelligence onboarding team.</span></div></form>';
  var wrap=document.createElement("section");wrap.className="fw";wrap.dataset.key=key;wrap.hidden=true;wrap.innerHTML=html;
  // formhead sits outside <form>; keep both inside wrapper
  panels.appendChild(wrap);
  var F_={key:key,el:$("form",wrap),box:wrap,specs:specs,by:by,secs:secs,map:map};
  state[key]=F_;
- F_.el.addEventListener("input",function(){refresh(F_)});
- F_.el.addEventListener("change",function(){refresh(F_)});
+ F_.el.addEventListener("input",function(){refresh(F_);saveSoon(F_)});
+ F_.el.addEventListener("change",function(){refresh(F_);saveSoon(F_)});
  F_.el.addEventListener("focusout",function(e){var w=e.target.closest&&e.target.closest("[data-id]");if(!w||w.classList.contains("hide"))return;var s=by[w.dataset.id];
   if(s.type==="radio"||s.type==="check")return;if(s.type==="imglink"&&!(e.target.classList&&e.target.classList.contains("c")))return;if(get(F_,s)||w.classList.contains("bad"))setErr(w,check(s,get(F_,s)))});
  F_.el.addEventListener("submit",function(e){submit(F_,e)});
  wireImages(F_);
+ $("[data-clear]",wrap).addEventListener("click",function(){askClear(F_)});
+ draftRestore(F_);
  F_.el.hidden=false;
  var b=document.createElement("button");
  b.className="tab";b.type="button";b.setAttribute("role","tab");b.id="tab-"+key;b.style.setProperty("--c",def.color);b.setAttribute("aria-controls","panel-"+key);
@@ -158,7 +160,7 @@ function paint(F_){
  $("#count").textContent=done+" of "+total+" fields completed";$("#chk").innerHTML=rows;
 }
 function select(key){
- active=key;$$(".tn button").forEach(function(b){b.setAttribute("aria-current",b.dataset.k===key)});
+ active=key;try{localStorage.setItem("pi_onboarding_tab_v1",key)}catch(e){}$$(".tn button").forEach(function(b){b.setAttribute("aria-current",b.dataset.k===key)});
  ORDER.forEach(function(k){var on=k===key;state[k].box.hidden=!on;var t=$("#tab-"+k);t.setAttribute("aria-selected",on);t.tabIndex=on?0:-1});
  refresh(state[key]);
 }
@@ -178,12 +180,12 @@ function onFile(F_,s,w,file){
  readAs(file,"buf",3).then(function(b){var a=new Uint8Array(b);if(!(a[0]===255&&a[1]===216&&a[2]===255))throw new Error("type");return imgSize(file)}).then(function(d){
   if(seq!==w._seq){URL.revokeObjectURL(d.u);return}
   if(rule.width&&(d.w!==rule.width||d.h!==rule.height)){URL.revokeObjectURL(d.u);throw new Error("dim:"+d.w+" \u00D7 "+d.h)}
-  w._url=d.u;$(".fi img",w).src=d.u;$(".fn",w).textContent=file.name;$(".fi",w).hidden=false;
+  w._url=d.u;$(".fi img",w).hidden=false;$(".fi img",w).src=d.u;$(".fn",w).textContent=file.name;$(".fi",w).hidden=false;
   st.textContent="Uploading...";st.className="st";w.dataset.busy="1";
   if(!CFG.UPLOAD_URL)throw new Error("off");
   return readAs(file,"url").then(function(u){return fetch(CFG.UPLOAD_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:s.kind,name:file.name,mime:"image/jpeg",data:u.split(",")[1]})})})
    .then(function(r){return r.json()}).then(function(j){if(seq!==w._seq)return;if(!j||!j.ok||!j.url)throw new Error("net");
-    $(".c",w).value=j.url;delete w.dataset.busy;st.textContent="Uploaded";st.className="st ok";refresh(F_)});
+    $(".c",w).value=j.url;delete w.dataset.busy;st.textContent="Uploaded";st.className="st ok";refresh(F_);saveSoon(F_)});
  }).catch(function(e){var m=(e&&e.message)||"";
   fail(m==="type"?IMG_ERR.type:m.indexOf("dim:")===0?"The image must be "+rule.width+" \u00D7 "+rule.height+" pixels (yours is "+m.slice(4)+").":m==="off"?IMG_ERR.off:IMG_ERR.net)});
 }
@@ -192,6 +194,32 @@ function wireImages(F_){F_.specs.forEach(function(s){if(s.type!=="imglink")retur
  $(".up input",w).addEventListener("change",function(e){onFile(F_,s,w,e.target.files[0])});
  $(".rm",w).addEventListener("click",function(){clearImg(w);refresh(F_)})})}
 function resetImages(F_){F_.specs.forEach(function(s){if(s.type==="imglink")imgSet(F_,s,wrapOf(F_,s),"link")})}
+
+/* ---------- Draft: answers are kept in this browser until the form is submitted or cleared ---------- */
+var DKEY="pi_onboarding_draft_v1_",DAYS=30,saveT={},lastKey="",pendingKey="";
+function draftSave(F_){try{var d={};F_.specs.forEach(function(s){var w=wrapOf(F_,s);
+ d[s.id]=s.type==="imglink"?{m:s._mode||"link",v:get(F_,s),n:$(".fn",w).textContent}:get(F_,s)});
+ localStorage.setItem(DKEY+F_.key,JSON.stringify({t:Date.now(),d:d}))}catch(e){}}
+function saveSoon(F_){clearTimeout(saveT[F_.key]);saveT[F_.key]=setTimeout(function(){draftSave(F_)},300)}
+function draftClear(key){clearTimeout(saveT[key]);try{localStorage.removeItem(DKEY+key)}catch(e){}}
+function draftRestore(F_){
+ var raw,o;try{raw=localStorage.getItem(DKEY+F_.key)}catch(e){return}
+ if(!raw)return;try{o=JSON.parse(raw)}catch(e){return}
+ if(!o||!o.d||Date.now()-o.t>DAYS*864e5){draftClear(F_.key);return}
+ F_.specs.forEach(function(s){var v=o.d[s.id],w=wrapOf(F_,s);if(v==null)return;
+  if(s.type==="radio")$$("input",w).forEach(function(i){i.checked=i.value===v});
+  else if(s.type==="check")$$("input",w).forEach(function(i){i.checked=Array.isArray(v)&&v.indexOf(i.value)>-1});
+  else if(s.type==="imglink"){imgSet(F_,s,w,v.m==="upload"?"upload":"link");
+   if(v.v){$(".c",w).value=v.v;if(v.m==="upload"){$(".fn",w).textContent=v.n||"Uploaded image";$(".fi img",w).hidden=true;$(".fi",w).hidden=false;var st=$(".st",w);st.textContent="Uploaded";st.className="st ok"}}}
+  else if(typeof v==="string"){var c=$(".c",w);if(!c)return;if(s.type==="select"&&$$("option",c).every(function(op){return op.value!==v}))return;c.value=v}});
+ refresh(F_);
+}
+function resetForm(F_){F_.el.reset();resetImages(F_);F_.specs.forEach(function(s){setErr(wrapOf(F_,s),"")});$("#n-"+F_.key).classList.remove("on");refresh(F_);draftClear(F_.key)}
+function askClear(F_){pendingKey=F_.key;var d=$("#clear");typeof d.showModal==="function"?d.showModal():d.setAttribute("open","");$("#cno").focus()}
+function closeDlg(d){d.close?d.close():d.removeAttribute("open")}
+$("#cno").addEventListener("click",function(){closeDlg($("#clear"))});
+$("#cyes").addEventListener("click",function(){var F_=state[pendingKey];closeDlg($("#clear"));if(F_){resetForm(F_);F_.box.scrollIntoView({block:"start",behavior:reduce?"auto":"smooth"})}});
+$("#clear").addEventListener("click",function(e){if(e.target===this)closeDlg(this)});
 
 /* ---------- Submit ---------- */
 function submit(F_,e){
@@ -224,16 +252,14 @@ function submit(F_,e){
  else send=fetch("https://docs.google.com/forms/d/e/"+FORM_IDS[F_.key]+"/formResponse",{method:"POST",mode:"no-cors",body:p});
 
  send.then(function(){
+  lastKey=F_.key;draftClear(F_.key);
   var dlg=$("#done");typeof dlg.showModal==="function"?dlg.showModal():dlg.setAttribute("open","");$("#ok").focus();
  }).catch(function(err){var code=(err&&err.message==="config"?"CFG":"NET")+"-"+F_.key.toUpperCase();note.textContent="We could not submit your form right now. Please try again in a few minutes. (Ref: "+code+")";note.classList.add("on");note.scrollIntoView({block:"center"})})
  .then(function(){btn.disabled=false;$(".lbl",btn).textContent="Submit"});
 }
 
 /* ---------- Reset after confirmation ---------- */
-function resetAll(){
- ORDER.forEach(function(k){var F_=state[k];F_.el.reset();resetImages(F_);F_.specs.forEach(function(s){setErr(wrapOf(F_,s),"")});$("#n-"+k).classList.remove("on");refresh(F_)});
- select("whatsapp");window.scrollTo({top:0,behavior:"auto"});
-}
+function resetAll(){if(!lastKey)return;var k=lastKey;lastKey="";resetForm(state[k]);select("whatsapp");window.scrollTo({top:0,behavior:"auto"})}
 $("#ok").addEventListener("click",function(){var d=$("#done");d.close?d.close():d.removeAttribute("open");resetAll()});
 $("#done").addEventListener("close",resetAll);
 $("#done").addEventListener("click",function(e){if(e.target===this)this.close()});
@@ -241,7 +267,8 @@ $("#done").addEventListener("click",function(e){if(e.target===this)this.close()}
 ORDER.forEach(build);
 ORDER.forEach(function(k){var F_=state[k],m=F_.specs.filter(function(s){return!(s.id==="email"&&F_.specs[0].id==="email")&&!F_.map[norm(s.title||s.label)]}).map(function(s){return s.label});
  if(m.length&&!preview)console.warn("[Onboarding] "+FORMS[k].tab+" form: Google entry IDs missing for "+m.length+" field(s). Submissions will not be sent until they are added to ENTRY."+k,m)});
-select("whatsapp");
+var t0="whatsapp";try{var sv=localStorage.getItem("pi_onboarding_tab_v1");if(sv&&state[sv])t0=sv}catch(e){}
+select(t0);
 })();
 
 /* Header menu, logo, motion preference and one-time welcome dialog */
