@@ -33,9 +33,9 @@ window.PI_CONFIG = {
   /* Where each form sends its answers:
        "sheet"  directly into a Google Sheet (needs SHEET_URL, see whatsapp-sheet-apps-script.gs)
        "form"   the original Google Form (uses FORM_IDS and ENTRY above) */
-  TARGETS: { whatsapp: "sheet", sms: "form", rcs: "form" },
+  TARGETS: { whatsapp: "form", sms: "form", rcs: "form" },
 
-  /* Web app URL (ends in /exec) of whatsapp-sheet-apps-script.gs */
+  /* Web app URL (ends in /exec) of whatsapp-sheet-apps-script.gs. Only used when a form is set to "sheet" above. */
   SHEET_URL: "https://script.google.com/macros/s/AKfycbzIZTchcvucKQ9Yz9TLvQ5AxeAubCqrcTqqdZojKXa9IRz7_FfprtbVP2JyMmvBMHlx/exec",
 
   /* RCS image upload. Web-app URL of the upload script (see upload-apps-script.gs and README).
