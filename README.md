@@ -1,74 +1,61 @@
 # Paytm Intelligence: client onboarding portal
 
-Static site (no build step). Customers pick WhatsApp, SMS or RCS, fill the in-page form, and the answers are
-sent to the original Google Form, so responses and notification emails work as before.
+A static website (no build step) where clients choose WhatsApp, SMS or RCS, complete the onboarding questionnaire
+in the page, and submit. Answers go to the original Google Forms, so responses, response sheets and notification
+emails work exactly as before.
 
-## Structure
+## Files
 
-```
-index.html        page markup
-css/styles.css    all styling
-js/config.js      settings: form IDs, field IDs, logo, test flags  (the file you edit)
-js/app.js         form definitions, validation, submit, welcome dialog
-.nojekyll         tells GitHub Pages to serve files as they are
-```
+| File | Purpose |
+|------|---------|
+| `index.html` | Page structure |
+| `styles.css` | All styling (phone, tablet, laptop, large monitor) |
+| `app.js` | Forms, validation, auto-saved drafts, submit, loaders, welcome pop-up |
+| `config.js` | Settings: form IDs, field IDs, where each form submits, logo, test flags |
+| `upload-apps-script.gs` | Optional: lets RCS clients upload JPG/JPEG images (saved to Google Drive) |
+| `whatsapp-sheet-apps-script.gs` | Optional: submit WhatsApp answers straight into a Google Sheet instead of the form |
+| `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 
-## Deploy on GitHub Pages
+All files sit in one folder (repository root or `/docs`).
 
-1. Keep `index.html`, `css/`, `js/` and `.nojekyll` at the repository root (or in `/docs`).
-2. Repository **Settings > Pages > Build and deployment**: source = *Deploy from a branch*, choose your branch and `/ (root)` (or `/docs`).
-3. After each change, bump the `?v=1.0.0` on the CSS and JS links in `index.html` so visitors do not get cached files.
+## Publish on GitHub Pages
 
-## Configuration (`js/config.js`)
+1. Put the files in the repository root (or `/docs`).
+2. **Settings > Pages**: deploy from your branch and folder.
+3. After every change, raise the `?v=` number on the three file links in `index.html` so visitors get fresh files.
 
-- **ENTRY**: Google field IDs per form. The WhatsApp map is filled in. SMS and RCS must be added before they can submit.
-  The snippet to generate each map is in the file comments.
-- **HIDDEN_SELECT_VALUE**: see the comment in the file. The simplest fix is to make
-  "If Yes, who is the current BSP?" optional in the WhatsApp Google Form.
-- **LOGO_SRC**: path to the official Pi logo, for example `img/pi-logo.svg`. Empty shows the built-in wordmark.
-- **ENABLE_TEST_MODES**: keep `false` on the live site. Set `true` temporarily to use `?preview` (fake success) or
-  `?debug` (opens Google's real response page in a new tab).
+## Current configuration (`config.js`)
 
-## Testing a submission
+- `TARGETS`: `whatsapp`, `sms` and `rcs` all submit to their Google Form (`"form"`).
+  Set one to `"sheet"` to send it to a Google Sheet instead (needs `SHEET_URL`, see below).
+- `FORM_IDS` and `ENTRY` link each field to its Google Form question. They match the question titles exactly:
+  if a question is renamed or reordered in a Google Form, update `ENTRY` and the label in `app.js`.
+- `UPLOAD_URL`: address of the RCS image-upload script. Empty means clients can still paste a link.
+- `ENABLE_TEST_MODES`: keep `false` on the live site.
 
-Submit a real entry on each tab, confirm it appears in the Google response sheet and that the expected email arrives,
-then delete the test rows.
+## Behaviour
 
-## Behaviour notes
+- All visible fields are required, with format checks (email, phone, links, hex colour, dates, 5-10 RCS test numbers).
+- Follow-up questions appear only when relevant; hidden text answers are sent as `N/A`.
+- Answers are auto-saved in the client's browser until the form is submitted or cleared (kept up to 30 days).
+- A loading overlay shows while submitting, with an extra notice on slow connections; requests time out after 30 seconds
+  and show an error with a reference code, for example `(Ref: TIMEOUT-WHATSAPP)`.
+- The welcome pop-up shows once per browser.
 
-- All visible fields are required. Conditional fields appear only when relevant; hidden text fields are sent as `N/A`.
-- The welcome pop-up shows once per browser (stored in `localStorage`) and appears again after site data is cleared.
-- Do not rename form questions in Google Forms without updating the matching labels in `js/app.js` and the keys in `js/config.js`.
+## RCS image upload (optional)
 
-## Optional hardening
+JPG / JPEG only, with the size checks in `IMAGE_RULES`. Deploy `upload-apps-script.gs` as an Apps Script web app
+(Execute as: Me, access: Anyone) and put its `/exec` address in `UPLOAD_URL`. Run `testSetup` once in the script editor
+to grant Drive access. This needs a Google account that is allowed to publish web apps to "Anyone".
 
-GitHub Pages cannot set HTTP headers. If you want a Content Security Policy, add this inside `<head>` and test every form afterwards:
+## WhatsApp to a Google Sheet (optional)
 
-```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://docs.google.com https://accounts.google.com; form-action https://docs.google.com; base-uri 'none'; object-src 'none'">
-```
+Deploy `whatsapp-sheet-apps-script.gs` the same way, put its `/exec` address in `SHEET_URL` and set
+`TARGETS.whatsapp` to `"sheet"`. To use an existing sheet, set `SHEET_ID` and `SHEET_NAME` in the script; answers are
+matched to columns by header name.
 
-## RCS image upload (logo and banner)
+## Before going live
 
-In the RCS form, "Agent Logo" and "Hero Image / Banner" accept either a pasted link or an uploaded image.
-Only JPG / JPEG files are accepted (checked by file extension and by the file's actual contents). The sizes in
-`IMAGE_RULES` in `js/config.js` are enforced on upload; remove a number there to stop checking it.
-
-Google Forms cannot receive files from a website, so an upload is first saved to Google Drive and the resulting
-link is sent in the existing form field. This needs a small Google Apps Script:
-
-1. Follow the steps at the top of `upload-apps-script.gs` (create a Drive folder, paste the script, deploy as a web app
-   with access "Anyone").
-2. Paste the web app URL into `UPLOAD_URL` in `js/config.js`.
-
-## WhatsApp: submit straight into a Google Sheet
-
-WhatsApp no longer uses its Google Form. Each submission is added as a row in a Google Sheet by a small Apps Script
-(`whatsapp-sheet-apps-script.gs`). SMS and RCS still submit to their Google Forms. The choice per form is
-`TARGETS` in `js/config.js`; the script's address goes in `SHEET_URL`.
-
-Setup: follow the steps at the top of `whatsapp-sheet-apps-script.gs` (paste the script, run `testSetup` once to
-allow access and create the sheet, deploy as a web app with access "Anyone", paste the `/exec` URL into `SHEET_URL`).
-
-Switching to the original sheet later: put its ID in `SHEET_ID` and its tab name in `SHEET_NAME` in the script, then
-create a new deployment version. Answers are matched to columns by header name; missing columns are added at the end.
+- Submit one real test entry per channel and confirm it reaches the right response sheet and the usual email arrives.
+- Replace the code-drawn Pi wordmark with the official logo: add the file and set `LOGO_SRC` in `config.js`.
+- Delete test rows from the response sheets.
