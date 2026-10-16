@@ -36,7 +36,7 @@ window.PI_CONFIG = {
   TARGETS: { whatsapp: "sheet", sms: "form", rcs: "form" },
 
   /* Web app URL (ends in /exec) of whatsapp-sheet-apps-script.gs */
-  SHEET_URL: "https://script.google.com/a/macros/paytm.com/s/AKfycby4CMk5EndclBn94BsfXkFtS4h67cmWmxQ_kMApl28ujvZzXpEdwNFs27SOVkvG0ls79w/exec",
+  SHEET_URL: "https://script.google.com/macros/s/AKfycbzIZTchcvucKQ9Yz9TLvQ5AxeAubCqrcTqqdZojKXa9IRz7_FfprtbVP2JyMmvBMHlx/exec",
 
   /* RCS image upload. Web-app URL of the upload script (see upload-apps-script.gs and README).
      Leave empty and customers can still paste a link, but the Upload option will report that it is unavailable. */
