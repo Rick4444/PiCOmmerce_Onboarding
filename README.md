@@ -60,3 +60,15 @@ link is sent in the existing form field. This needs a small Google Apps Script:
 1. Follow the steps at the top of `upload-apps-script.gs` (create a Drive folder, paste the script, deploy as a web app
    with access "Anyone").
 2. Paste the web app URL into `UPLOAD_URL` in `js/config.js`.
+
+## WhatsApp: submit straight into a Google Sheet
+
+WhatsApp no longer uses its Google Form. Each submission is added as a row in a Google Sheet by a small Apps Script
+(`whatsapp-sheet-apps-script.gs`). SMS and RCS still submit to their Google Forms. The choice per form is
+`TARGETS` in `js/config.js`; the script's address goes in `SHEET_URL`.
+
+Setup: follow the steps at the top of `whatsapp-sheet-apps-script.gs` (paste the script, run `testSetup` once to
+allow access and create the sheet, deploy as a web app with access "Anyone", paste the `/exec` URL into `SHEET_URL`).
+
+Switching to the original sheet later: put its ID in `SHEET_ID` and its tab name in `SHEET_NAME` in the script, then
+create a new deployment version. Answers are matched to columns by header name; missing columns are added at the end.
