@@ -184,10 +184,12 @@ function onFile(F_,s,w,file){
   st.textContent="Uploading...";st.className="st";w.dataset.busy="1";
   if(!CFG.UPLOAD_URL)throw new Error("off");
   return readAs(file,"url").then(function(u){return fetch(CFG.UPLOAD_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:s.kind,name:file.name,mime:"image/jpeg",data:u.split(",")[1]})})})
-   .then(function(r){return r.json()}).then(function(j){if(seq!==w._seq)return;if(!j||!j.ok||!j.url)throw new Error("net");
+   .then(function(r){return r.json()}).then(function(j){if(seq!==w._seq)return;if(!j||!j.ok||!j.url){console.error("[Onboarding] upload rejected:",j);throw new Error("srv:"+((j&&j.error)||"unknown"))}
     $(".c",w).value=j.url;delete w.dataset.busy;st.textContent="Uploaded";st.className="st ok";refresh(F_);saveSoon(F_)});
  }).catch(function(e){var m=(e&&e.message)||"";
-  fail(m==="type"?IMG_ERR.type:m.indexOf("dim:")===0?"The image must be "+rule.width+" \u00D7 "+rule.height+" pixels (yours is "+m.slice(4)+").":m==="off"?IMG_ERR.off:IMG_ERR.net)});
+  if(m!=="type"&&m.indexOf("dim:")!==0&&m!=="off")console.error("[Onboarding] upload failed:",e);
+  var ref=m.indexOf("srv:")===0?m.slice(4):(e&&e.name==="SyntaxError"?"resp":"net");
+  fail(m==="type"?IMG_ERR.type:m.indexOf("dim:")===0?"The image must be "+rule.width+" \u00D7 "+rule.height+" pixels (yours is "+m.slice(4)+").":m==="off"?IMG_ERR.off:IMG_ERR.net+" (Ref: UPL-"+ref.toUpperCase()+")")});
 }
 function wireImages(F_){F_.specs.forEach(function(s){if(s.type!=="imglink")return;var w=wrapOf(F_,s);s._mode="link";
  $$(".seg button",w).forEach(function(b){b.addEventListener("click",function(){imgSet(F_,s,w,b.dataset.m)})});
@@ -221,6 +223,14 @@ $("#cno").addEventListener("click",function(){closeDlg($("#clear"))});
 $("#cyes").addEventListener("click",function(){var F_=state[pendingKey];closeDlg($("#clear"));if(F_){resetForm(F_);F_.box.scrollIntoView({block:"start",behavior:reduce?"auto":"smooth"})}});
 $("#clear").addEventListener("click",function(e){if(e.target===this)closeDlg(this)});
 
+/* ---------- Send to a Google Sheet (through the Apps Script web app) ---------- */
+function sheetRecord(F_){var rec={};F_.specs.forEach(function(s){var shown=vis(F_,s),v=shown?get(F_,s):"N/A",
+ k=s.id==="email"&&F_.specs[0].id==="email"?"Email Address":norm(s.title||s.label);rec[k]=Array.isArray(v)?v.join(", "):v});return rec}
+function sendSheet(F_){
+ if(!CFG.SHEET_URL)return Promise.reject(new Error("config"));
+ return fetch(CFG.SHEET_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({form:F_.key,data:sheetRecord(F_)})})
+  .then(function(r){return r.json()}).then(function(j){if(!j||!j.ok){console.error("[Onboarding] sheet rejected:",j);throw new Error("srv:"+((j&&j.error)||"unknown"))}})}
+
 /* ---------- Submit ---------- */
 function submit(F_,e){
  e.preventDefault();
@@ -228,6 +238,7 @@ function submit(F_,e){
  F_.specs.forEach(function(s){var w=wrapOf(F_,s);if(!vis(F_,s)){setErr(w,"");return}var m=w.dataset.busy?"Please wait for the upload to finish.":check(s,get(F_,s));setErr(w,m);if(m&&!first)first=w});
  if(first){first.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});var c=$("input,select,textarea",first);if(c)c.focus({preventScroll:true});return}
 
+ var toSheet=((CFG.TARGETS||{})[F_.key]||"form")==="sheet";
  var p=new URLSearchParams(),miss=[];
  F_.specs.forEach(function(s){
   var shown=vis(F_,s),v=shown?get(F_,s):"N/A",key=s.id==="email"&&F_.specs[0].id==="email"?"emailAddress":F_.map[norm(s.title||s.label)];
@@ -240,7 +251,7 @@ function submit(F_,e){
  p.append("fvv","1");p.append("pageHistory","0");
  btn.disabled=true;$(".lbl",btn).textContent="Submitting";
 
- if(debug){/* opens Google's own response page in a new tab so you can read its exact message */
+ if(debug&&!toSheet){/* opens Google's own response page in a new tab so you can read its exact message */
   var act="https://docs.google.com/forms/d/e/"+FORM_IDS[F_.key]+"/formResponse",f=document.createElement("form");
   f.method="POST";f.action=act;f.target="_blank";f.style.display="none";
   p.forEach(function(v,k){var i=document.createElement("input");i.type="hidden";i.name=k;i.value=v;f.appendChild(i)});
@@ -248,13 +259,14 @@ function submit(F_,e){
 
  var send;
  if(preview)send=new Promise(function(r){setTimeout(r,700)});
+ else if(toSheet)send=sendSheet(F_);
  else if(miss.length){console.error("Onboarding form is missing Google Form entry IDs for:",miss);send=Promise.reject(new Error("config"))}
  else send=fetch("https://docs.google.com/forms/d/e/"+FORM_IDS[F_.key]+"/formResponse",{method:"POST",mode:"no-cors",body:p});
 
  send.then(function(){
   lastKey=F_.key;draftClear(F_.key);
   var dlg=$("#done");typeof dlg.showModal==="function"?dlg.showModal():dlg.setAttribute("open","");$("#ok").focus();
- }).catch(function(err){var code=(err&&err.message==="config"?"CFG":"NET")+"-"+F_.key.toUpperCase();note.textContent="We could not submit your form right now. Please try again in a few minutes. (Ref: "+code+")";note.classList.add("on");note.scrollIntoView({block:"center"})})
+ }).catch(function(err){console.error("[Onboarding] submit failed:",err);var em=(err&&err.message)||"",code=(em==="config"?"CFG":em.indexOf("srv:")===0?"SRV-"+em.slice(4).toUpperCase():err&&err.name==="SyntaxError"?"RESP":"NET")+"-"+F_.key.toUpperCase();note.textContent="We could not submit your form right now. Please try again in a few minutes. (Ref: "+code+")";note.classList.add("on");note.scrollIntoView({block:"center"})})
  .then(function(){btn.disabled=false;$(".lbl",btn).textContent="Submit"});
 }
 
