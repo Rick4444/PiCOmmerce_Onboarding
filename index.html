@@ -13,9 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=1.3.0">
-<script src="config.js?v=1.3.0" defer></script>
-<script src="app.js?v=1.3.0" defer></script>
+<link rel="stylesheet" href="styles.css?v=1.4.0">
+<script src="config.js?v=1.4.0" defer></script>
+<script src="app.js?v=1.4.0" defer></script>
 </head>
 <body>
 <noscript><div style="padding:16px;text-align:center;background:#fff3cd;color:#664d03;font:16px system-ui,sans-serif">Please enable JavaScript to use the onboarding form.</div></noscript>
@@ -48,9 +48,9 @@
 </div></div>
 
 <main id="main"><div class="wrap">
- <div class="tabs" role="tablist" aria-label="Onboarding channel" id="tabs"></div>
+ <div class="tabs" role="tablist" aria-label="Onboarding channel" id="tabs"><span class="tab-sk"></span><span class="tab-sk"></span><span class="tab-sk"></span></div>
  <div class="layout" style="margin-top:24px">
-  <div class="card" id="panels"></div>
+  <div class="card" id="panels" aria-live="polite"><div class="sk" id="sk" role="status"><span class="sr">Loading the onboarding form</span><i class="t"></i><div class="r"><i></i><i></i></div><div class="r"><i></i><i></i></div><div class="r"><i></i><i></i></div><div class="r"><i></i><i></i></div></div></div>
   <aside aria-label="Progress and next steps">
    <div class="card prog"><h4>Your progress</h4><div class="meter" role="progressbar" aria-label="Form completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="meter"><i id="bar"></i></div><p class="count" id="count" aria-live="polite"></p><ul class="chk hm" id="chk" style="margin-top:16px"></ul></div>
    <div class="card hm"><h4>What happens next</h4><ol class="flow"><li><b>Submit your form</b>All fields are required.</li><li><b>We review your details</b>The Paytm Intelligence team checks your request.</li><li><b>We get back to you</b>You will hear from us by email.</li></ol></div>
@@ -58,7 +58,7 @@
  </div>
 </div></main>
 
-<footer><div class="wrap"><span>&copy; <span id="yr">2026</span> Paytm Intelligence &middot; Version 1.3.0</span><span>Need help? Contact your Paytm Intelligence account manager.</span></div></footer>
+<footer><div class="wrap"><span>&copy; <span id="yr">2026</span> Paytm Intelligence</span><span>Need help? Contact your Paytm Intelligence account manager.</span></div></footer>
 
 <dialog id="welcome" aria-labelledby="wt"><div class="dlg wl">
  <div class="pi" aria-hidden="true">Pi</div>
@@ -71,6 +71,11 @@
  </ol>
  <button class="submit" id="wgo" type="button">Begin onboarding</button>
 </div></dialog>
+
+<div class="busy" id="busy" hidden role="alertdialog" aria-modal="true" aria-labelledby="bt" aria-describedby="bd">
+ <div class="bcard"><div class="ring" aria-hidden="true"></div><h2 id="bt">Submitting your response</h2><p id="bd">Please keep this page open.</p>
+ <p class="bslow" id="bslow" hidden>This is taking longer than usual because of a slow connection. Please do not close or refresh this page.</p></div>
+</div>
 
 <dialog id="clear" aria-labelledby="ct"><div class="dlg">
  <h2 id="ct">Clear this form?</h2>
