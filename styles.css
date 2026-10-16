@@ -170,6 +170,9 @@ img,svg,video{max-width:100%}
 .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;font-weight:500}
 .rm{flex:none;appearance:none;border:1px solid #c3d1ea;background:#fff;border-radius:99px;padding:8px 14px;font:600 .82rem var(--body);color:#b3261e;cursor:pointer}.rm:hover{background:#fdecec}
 .st{margin:8px 0 0;font-size:.84rem;color:var(--muted)}.st.ok{color:var(--ok);font-weight:600}
+.clear{appearance:none;cursor:pointer;font:600 1rem var(--body);color:var(--navy);background:#fff;border:1px solid #b9c9e6;padding:14px 26px;border-radius:12px;transition:background .2s,border-color .2s}
+.clear:hover{background:#eef4fc;border-color:#8fa8d4}
+.btnrow{display:flex;gap:12px}.btnrow>*{flex:1}.dlg .btnrow .submit{width:auto;min-width:0;white-space:nowrap;padding-inline:12px}.btnrow .clear{padding-inline:12px}
 /* ---------- Responsive (keep at the end; ordered large to small) ---------- */
 @media (max-width:980px){
 .layout{grid-template-columns:1fr}
@@ -205,7 +208,7 @@ img,svg,video{max-width:100%}
  .layout{margin-top:18px!important;gap:18px}
  .formhead{padding:20px 16px 4px}form{padding-inline:16px}
  .sec{padding-top:22px}.sec h3{font-size:.98rem}
- .actions{flex-direction:column;align-items:stretch;gap:12px}.small{text-align:center}
+ .actions{flex-direction:column;align-items:stretch;gap:12px}.small{text-align:center}.clear{width:100%}
  .dlg{padding:30px 20px 22px}.dlg h2{font-size:1.25rem}
  footer .wrap{flex-direction:column}
 }
