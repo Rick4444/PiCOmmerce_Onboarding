@@ -30,6 +30,14 @@ window.PI_CONFIG = {
      Leave empty to show the built-in Pi wordmark. */
   LOGO_SRC: "",
 
+  /* Where each form sends its answers:
+       "sheet"  directly into a Google Sheet (needs SHEET_URL, see whatsapp-sheet-apps-script.gs)
+       "form"   the original Google Form (uses FORM_IDS and ENTRY above) */
+  TARGETS: { whatsapp: "sheet", sms: "form", rcs: "form" },
+
+  /* Web app URL (ends in /exec) of whatsapp-sheet-apps-script.gs */
+  SHEET_URL: "",
+
   /* RCS image upload. Web-app URL of the upload script (see upload-apps-script.gs and README).
      Leave empty and customers can still paste a link, but the Upload option will report that it is unavailable. */
   UPLOAD_URL: "",
